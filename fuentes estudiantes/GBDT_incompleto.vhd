@@ -1,6 +1,9 @@
 ----------------------------------------------------------------------------------
 -- Company: Universidad de Zaragoza
 -- Engineer: Javier Resano
+-- Completers: Jorge FernÃ¡ndez MarÃ­n, 839113
+--             Javier Julve Yubero, 840710
+--             Mario Ortega Cubero, 817586
 -- 
 -- Create Date:    22/02/2022 
 -- Design Name: 
@@ -69,8 +72,8 @@ component mux8_1 is
          Dout: out std_logic_vector(DATA_LENGTH - 1 downto 0));
     end component;
     
--- Señales orientativas. Podéis usarlas o crear las vuestras
--- Si alguna no la usais la podéis quitar
+-- Seï¿½ales orientativas. Podï¿½is usarlas o crear las vuestras
+-- Si alguna no la usais la podï¿½is quitar
 signal node : STD_LOGIC_VECTOR (15 downto 0);
 signal feature_addr: STD_LOGIC_VECTOR (2 downto 0);
 signal addr_distance: STD_LOGIC_VECTOR (3 downto 0);
@@ -83,6 +86,7 @@ begin
 
 -- Reset for the registers
     reg_reset <= reset or int_reset;
+
  -- Addr register
     node_counter: reg
         generic map(BITS => 7)
@@ -93,15 +97,19 @@ begin
                  Dout  => curr_addr);
 
 	GBDT_ROM: memoriaROM_128x16  port map (addr=> curr_addr, dout=> node);
+
 	-- common fields
 	addr_distance <= node(11 downto 8);
 	node_type <= node(15); --'0': Non-leaf node; '1': leaf node
-	-- Non-leaf node fields
+	
+    -- Non-leaf node fields
 	comparisom_value <= node(7 downto 0);	
 	feature_addr <= node(14 downto 12);
-	-- Leaf node fields
+	
+    -- Leaf node fields
 	leaf_value <= node(7 downto 0);
--- Mux to select the corresponding feature
+
+    -- Mux to select the corresponding feature
     features_mux: mux8_1
         generic map(DATA_LENGTH => 8)
         Port map(Ctrl => feature_addr,
@@ -109,10 +117,21 @@ begin
                  Dout => Feature_selected);
 
 -- CMP
+
+    next_node <= '0' when ((Feature_selected < comparisom_value) and (node_type = '0')) else '1';
+    load_output <= '1' when (node_type = '1') else '0';
+
 	
 -- Addr logic
-	
+    
+	left_addr <= (1 + curr_addr);
+    right_addr <= (curr_addr + addr_distance);
+
+    next_addr <= left_addr when (next_node = '0') else right_addr;
+
 -- Accumulating the trees results
+    addition <= Int_Dout + leaf_value;
+    Trees_finished <= '1' when (addr_distance = "1111") else '0';
 	
 -- Output register
 output_reg: reg
@@ -122,7 +141,7 @@ output_reg: reg
                  Load  => load_output,
                  Din   => addition,
                  Dout  => Int_Dout);
-	Dout <= Int_Dout; -- en vhdl no puedes leer las salidas. Si necesitas leerlas, declaras una señal interna que puedes leer, y la usas para generar la salida
+	Dout <= Int_Dout; -- en vhdl no puedes leer las salidas. Si necesitas leerlas, declaras una seï¿½al interna que puedes leer, y la usas para generar la salida
 	Done <= Internal_Done;
 -------------------------------------
 --UC
@@ -140,20 +159,27 @@ output_reg: reg
    end process;
 
    --State-Machine
-   OUTPUT_DECODE: process (state, Trees_finished, start)-- recordad que en la lista de sensibilidad deben estar todas las señales que provoquen que el proceso pueda cambiar sus salidas. Si metéis nuevas entradas, incluidlas. 
+   OUTPUT_DECODE: process (state, Trees_finished, start)-- recordad que en la lista de sensibilidad deben estar todas las seï¿½ales que provoquen que el proceso pueda cambiar sus salidas. Si metï¿½is nuevas entradas, incluidlas. 
    begin
- -- valores por defecto, si no se asigna otro valor en un estado valdrán lo que se asigna aquí
- -- si necesitáis mñas señales añadirlas
+ -- valores por defecto, si no se asigna otro valor en un estado valdrï¿½n lo que se asigna aquï¿½
+ -- si necesitï¿½is mï¿½as seï¿½ales aï¿½adirlas
 		next_state <= state; 
 		load_addr <= '0'; 
 		Internal_Done <= '0';
 		int_reset <= '0';
  	-- Estado Inicio          
- 	-- Esta máquina de estados y sus salidas la teneís que diseñar vosotros. Estas líneas son sólo un ejemplo.
+ 	-- Esta mï¿½quina de estados y sus salidas la teneï¿½s que diseï¿½ar vosotros. Estas lï¿½neas son sï¿½lo un ejemplo.
         if (state = Processing) then
         	load_addr <= '1';  	
+            if (Trees_finished = '1') then
+                next_state <= Finished;
+                load_addr <= '0';
+            end if;
         else 
-        	Internal_Done <= '1';   	
+        	Internal_Done <= '1';
+            int_reset <= '1';   
+            next_state <= Processing;
+
      	end if;
   	end process;	     
 end Behavioral;
