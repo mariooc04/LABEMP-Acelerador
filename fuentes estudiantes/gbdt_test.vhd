@@ -60,6 +60,28 @@
 	start <= '1';
 	wait for CLK_period;
 	start <= '0';
+
+  -- Nuestras pruebas
+  wait until (Done = '1');
+	wait for CLK_period*2;
+	Din <= X"1011121314151617"; --Salida final = "11111111" 
+	start <= '1';
+	wait for CLK_period;
+	start <= '0';
+
+  wait until (Done = '1');
+	wait for CLK_period*2;
+	Din <= X"0001020304050607"; --Salida final = "00000000" 
+	start <= '1';
+	wait for CLK_period;
+	start <= '0';
+
+  wait until (Done = '1');
+	wait for CLK_period*2;
+	Din <= X"0F100F100F100F10"; --Salida final = "01010101" 
+	start <= '1';
+	wait for CLK_period;
+	start <= '0';
 	wait;
    end process;
 

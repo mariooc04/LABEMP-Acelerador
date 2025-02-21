@@ -118,7 +118,7 @@ begin
 
 -- CMP
 
-    next_node <= '0' when ((Feature_selected < comparisom_value) and (node_type = '0')) else '1';
+    next_node <= '0' when ((Feature_selected <= comparisom_value) and (node_type = '0')) else '1';
     load_output <= '1' when (node_type = '1') else '0';
 
 	
