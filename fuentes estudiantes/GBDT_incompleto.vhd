@@ -127,7 +127,7 @@ begin
 	left_addr <= (1 + curr_addr);
     right_addr <= (curr_addr + addr_distance);
 
-    next_addr <= left_addr when (next_node = '0') else right_addr;
+    next_addr <= right_addr when (node_type = '1') else left_addr when (next_node = '1') else right_addr;
 
 -- Accumulating the trees results
     addition <= Int_Dout + leaf_value;
@@ -170,17 +170,19 @@ output_reg: reg
  	-- Estado Inicio          
  	-- Esta m�quina de estados y sus salidas la tene�s que dise�ar vosotros. Estas l�neas son s�lo un ejemplo.
         if (state = Processing) then
-        	load_addr <= '1';  	
+            load_addr <= '1';  	
             if (Trees_finished = '1') then
                 next_state <= Finished;
-                load_addr <= '0';
             end if;
-        else 
-        	Internal_Done <= '1';
-            int_reset <= '1';   
-            next_state <= Processing;
-
-     	end if;
+        else
+            if (start = '1') then
+                next_state <= Processing;
+                int_reset <= '1';
+                Internal_Done <= '0';
+            end if;
+            Internal_Done <= '1';
+            load_addr <= '0';
+        end if;
   	end process;	     
 end Behavioral;
 
